@@ -1,0 +1,7 @@
+elasticsearch:
+    Password : XXXX
+    Port : XXXX
+
+logger:
+    level : info
+
