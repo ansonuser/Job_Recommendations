@@ -1,6 +1,6 @@
-### Introduction
+## Introduction
 
-This is a toy example of job recommendation.
+This is a toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two model to rank how positions match your resume. 
 
 ### Data Source
 1. Dice
@@ -12,11 +12,6 @@ Elasticsearch:
 2. Consider frequency of job updating is not so often. Word->doc and standardized token design provide agility to handle. 
 
 ### WorkFlow
-                               modeling
-crawling -> matching -> database --->  filter
-                | filter      ^  
-                V             | feedback
-            notification -> application
 
 | Step          | Process      |
 |--------------|-------------|
@@ -26,7 +21,7 @@ crawling -> matching -> database --->  filter
 | Database     | → Filter(Modeling)|
 | Filter       | → Notification  |
 | Notification |  → Application  |
-| Application   | → feedback  |
+| Application   | → Database(Feedback) |
 
 
 ### Details
@@ -60,8 +55,6 @@ docker run -d --name kibana `
     --net elastic `
     -p 5601:5601 `
     docker.elastic.co/kibana/kibana:8.5.3
-
-
 ```
 
 
