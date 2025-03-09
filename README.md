@@ -18,12 +18,23 @@ crawling -> matching -> database --->  filter
                 V             | feedback
             notification -> application
 
+| Step          | Process      |
+|--------------|-------------|
+|              |             |
+| Crawling     | → Matching  |
+| Matching     | → Database  |
+| Database     | → Filter(Modeling)|
+| Filter       | → Notification  |
+| Notification |  → Application  |
+| Application   | → feedback  |
+
+
 ### Details
 It's an unsupervised task at beginning(cold start). Match the resume to each job description.  
 
-metric:
+Ranking:
 - Semantic similarity: Computes text similarity between resume & JD (word embeding)
-- TF-IDF : Keywords (Skill)
+- Logit : LLM prediction 
 
 Until enough label, using PEFT to fine-tune LLM for binary classification. It can be combined with similarity too.
 
