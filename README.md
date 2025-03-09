@@ -2,16 +2,16 @@
 
 This is a toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two model to rank how positions match your resume. 
 
-### Data Source
+## Data Source
 1. Dice
 2. Themuse 
 
-### DB
+## DB
 Elasticsearch: 
 1. Data has different features
 2. Consider frequency of job updating is not so often. Word->doc and standardized token design provide agility to handle. 
 
-### WorkFlow
+## WorkFlow
 
 | Step          | Process      |
 |--------------|-------------|
@@ -24,7 +24,7 @@ Elasticsearch:
 | Application   | → Database(Feedback) |
 
 
-### Details
+## Details
 It's an unsupervised task at beginning(cold start). Match the resume to each job description.  
 
 Ranking:
@@ -33,7 +33,7 @@ Ranking:
 
 Until enough label, using PEFT to fine-tune LLM for binary classification. It can be combined with similarity too.
 
-### Requirements
+## Requirements
 1. Docker
 2. Elasticsearch
 
