@@ -72,3 +72,8 @@ $ PUT jobs_db/_mapping
   }
 }
 ```
+
+Rank the positions from your database
+```
+python predction/predict.py
+```
