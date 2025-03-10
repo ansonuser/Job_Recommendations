@@ -9,14 +9,19 @@ from nlp_functions.llm_utils import Agent
 from collections import defaultdict
 import pandas as pd
 import datetime
+import gc
+import torch
+import time
+import numpy as np
+import pdb
 
 class Predictor:
-    def __init__(self):
+    def __init__(self, qsize=2):
         self.supervisor = Agent(model_path=CFG["llm"]["mistral"])
-        assert self.supervisor.model_path is not None
         self.unsupervisor = Matcher()
-        self.stream = DataStream()
-        self.max_size = 20
+        self.stream = DataStream(qsize=qsize)
+        self.max_rank = 20
+        self.max_token_size = 250 
     def recommend(self, mode="AM"):
         """
         mode: 'A', 'M', 'AM'
@@ -27,24 +32,38 @@ class Predictor:
             self.unsupervisor.set_data(*self.stream.send_data())    
             similarity = self.unsupervisor.sim()
             flags[0] = True
-
+        self.unsupervisor.model.to("cpu")
+        self.unsupervisor = None
+        print("Before delete model:", torch.cuda.memory_reserved()/10**9)
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect() 
+        print("After delete model:", torch.cuda.memory_reserved()/10**9)
         if "A" in mode:
             self.supervisor.load_models()
+            print("After loading model:", torch.cuda.memory_reserved()/10**9)
+   
             resume, jobs = self.stream.send_data()
-            self.supervisor.resume = resume
+            self.supervisor.resume = resume.form()[:self.max_token_size]
+            self.supervisor.model.eval()
             res = []
+            scores = []
             for job in jobs:
-                job_id = job["Compnay_Name"] + "," + job["Title"]
-                score = self.supervisor.do_grade(job.form())
-                res.append((job_id, job["Link"], score))
-            order = sorted(res, key=lambda x:x[2], reverse=True) 
-            res = [(c[0], c[1], o) for c,o in zip(res, order)]
+                job_id = job.Company_Name + "," + job.Title
+                score = self.supervisor.do_grade([job.form()])
+                res.append((job_id, job.Link))
+                scores.append(score[0])
+                gc.collect()
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect() 
+            ranks = np.argsort(scores)
+            res = [(c[0], c[1], r) for c,r in zip(res, ranks)]
             flags[1] = True
 
 
         if "AM" == mode:
             link_map = {}
-            rank_dict = defaultdict(0)
+            rank_dict = defaultdict(int)
             n = len(res)
             for i in range(n):
                 key = link = None
@@ -60,12 +79,12 @@ class Predictor:
             ranks.sort(key = lambda x:x[2])
         else:
             ranks = res
-        ranks = ranks[:self.max_size]
+        ranks = ranks[:self.max_rank]
         time_str = datetime.datetime.now().strftime("%Y%m%d%H%%S")
         pd.DataFrame(ranks, columns=["Job ID", "Link", "Rank"]).to_csv(f"job_rank_{time_str}.csv")
         return ranks
     
 if __name__ == "__main__":
-    predictor = Predictor()
+    predictor = Predictor(qsize=50)
     ranks = predictor.recommend()
     print(ranks)

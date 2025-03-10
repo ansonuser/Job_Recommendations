@@ -2,7 +2,7 @@ from sentence_transformers import SentenceTransformer
 from utils.dataset import Resume, Job
 from typing import List
 import torch
-
+import numpy as np
 
 class Matcher:
     model = SentenceTransformer("BAAI/bge-m3")
@@ -31,13 +31,15 @@ class Matcher:
             data = self.sep.join(data)
             self.encode(data, cv=True)
         cur = []
+        scores = []
         for job in self.jobs:
             data = [job.Title, job.Top_Skills]#, job.description]
             data = self.sep.join(data)
             score = torch.dot(self.cv_embeddings, self.encode(data))
             cur.append((job.Company_Name + "," + job.Title, job.Link, score.item()))
-        order = sorted(cur, key=lambda x:x[2], reverse=True) 
-        return [(c[0], c[1], o) for c,o in zip(cur, order)]
+            scores.append(score.item())
+        ranks = np.argsort(scores)
+        return [(c[0], c[1], r) for c,r in zip(cur, ranks)]
         
         
             

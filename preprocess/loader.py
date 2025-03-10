@@ -47,11 +47,20 @@ class DataStream:
 
     def send_data(self):
         response = self.query_job_by_time()
-        feature_names = ["Title", "Overview", "Top Skills", "Description", "Company Name", "Link"]
-        jobs = [ Job(**{k:response["hits"]["hits"][i]["_source"][k] for k in feature_names}) for i in range(len(response["hits"]["hits"]))]
+        feature_names = ["Title", "Overview", "Top_Skills", "Description", "Company_Name", "Link"]
+        jobs = [ ]
+        for i in range(len(response["hits"]["hits"])):
+            try:
+                job = Job(**{k:response["hits"]["hits"][i]["_source"][k.replace("_"," ")] for k in feature_names})
+                jobs.append(job)
+            except Exception as e:
+                print(str(e))
+                print("Error at:", response["hits"]["hits"][i]["_source"])
+             
         with open(self.resume_path, "r") as f:
             resume = yaml.safe_load(f)
         resume = Resume(**resume)
+        print("Total jobs:", len(jobs))
         return resume, jobs
 
 

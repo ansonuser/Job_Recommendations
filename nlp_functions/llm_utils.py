@@ -5,7 +5,7 @@ from torch.nn import BCEWithLogitsLoss, Softmax
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
 import os
-
+from typing import List
 
 
 class BinaryClassificationLogitsProcessor(LogitsProcessorList):
@@ -97,7 +97,7 @@ class Agent:
             do_sample = True,
             temperature = 0.7,
             top_k=50,
-            max_new_tokens = 300
+            max_new_tokens = 200
         )
         generated_tokens = outputs[0][tokenized_inputs["input_ids"].shape[1]:]
         if len(generated_tokens) == 0:
@@ -109,10 +109,10 @@ class Agent:
     def get_grade_inputs(self, job_descriptions):
         job_descriptions = [self.do_bullet(job_description) for job_description in job_descriptions]
         score_prompts = [self.grade_resume_prompt(job_description, self.resume) for job_description in job_descriptions]
-        tokenized_inputs = self.tokenizer(score_prompts, return_tensors="pt", padding=True, truncation=True)
+        tokenized_inputs = self.tokenizer(score_prompts, return_tensors="pt", padding=True)
         return tokenized_inputs
 
-    def do_grade(self, job_descriptions, model=None):
+    def do_grade(self, job_descriptions:List=[], model=None):
         """
         Returns:
             torch.Tensor: Modified logits where only class tokens are allowed.
@@ -123,7 +123,8 @@ class Agent:
  
         tokenized_inputs = self.get_grade_inputs(job_descriptions)
         tokenized_inputs = {k: v.to("cuda") for k, v in tokenized_inputs.items()}
-
+        if model is None:
+            model = self.model
         output = model.generate(
             tokenized_inputs["input_ids"],
             attention_mask=tokenized_inputs["attention_mask"],
@@ -133,7 +134,7 @@ class Agent:
             output_scores=True
         )
         logits = torch.stack(output.scores, dim=1).squeeze(1)  
-        probs = torch.softmax(logits, dim=-1)
+        probs = torch.softmax(logits, dim=-1).cpu().detach().numpy()
         return probs[:, self.class_tokens[1]]
 
     def finetuning(self, job_descriptions, labels):
