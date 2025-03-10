@@ -68,8 +68,8 @@ r = requests.get("https://localhost:$PORT_ID/", auth=("elastic", $PASSWORD), ver
 
 For efficieny, make sure timestamp is mapped to date. If not, please update it as follows:
 
-$ PUT jobs_db/_mapping
 ```
+PUT jobs_db/_mapping
 {
   "properties": {
     "timestamp": { "type": "date" }
