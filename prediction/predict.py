@@ -77,7 +77,7 @@ class Predictor:
         else:
             ranks = res
         ranks = ranks[:self.max_rank]
-        time_str = datetime.datetime.now().strftime("%Y%m%d%H%%S")
+        time_str = datetime.datetime.now().strftime("%Y%m%d%H%S")
         pd.DataFrame(ranks, columns=["Job ID", "Link", "Rank"]).to_csv(f"job_rank_{time_str}.csv")
         return ranks
     
