@@ -34,10 +34,6 @@ def get_logger(log_path, level):
     formatter = logging.Formatter('%(asctime)s;%(levelname)s:%(message)s',"%Y-%m-%d %H:%M:%S")
     handler.setFormatter(formatter)
     handler.setLevel(level)
-
-    # Avoid duplicate handlers
-    if not logger.handlers:
-        logger.addHandler(handler)
     
     if logger.hasHandlers():
         logger.handlers.clear()
