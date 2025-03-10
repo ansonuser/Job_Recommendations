@@ -34,15 +34,12 @@ class Predictor:
             flags[0] = True
         self.unsupervisor.model.to("cpu")
         self.unsupervisor = None
-        print("Before delete model:", torch.cuda.memory_reserved()/10**9)
         gc.collect()
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect() 
-        print("After delete model:", torch.cuda.memory_reserved()/10**9)
+
         if "A" in mode:
             self.supervisor.load_models()
-            print("After loading model:", torch.cuda.memory_reserved()/10**9)
-   
             resume, jobs = self.stream.send_data()
             self.supervisor.resume = resume.form()[:self.max_token_size]
             self.supervisor.model.eval()
