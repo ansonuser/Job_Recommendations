@@ -26,6 +26,7 @@ class Dice:
             verify_certs=False
         )
 
+       
     def quit(self):
         self.driver.quit()
         
@@ -47,11 +48,12 @@ class Dice:
                 location, title, post date, company name, link of position, payment, contract type, top skills, description, query time
             Note: job_id: $company_name,$title
         """
-        keywords = "%20".join(keywords) #sep by space 
-        job_links = self.build_link_queue(keywords, page_size)
-        data = []
-        for job in job_links:
-            data.append(self.visit_queue(job))
+        for keyword in keywords:
+            keywords = "%20".join(keyword.split(" ")) #sep by space 
+            job_links = self.build_link_queue(keywords, page_size)
+            data = []
+            for job in job_links:
+                data.append(self.visit_queue(job))
         
         return data
 
@@ -163,7 +165,7 @@ class Dice:
 
         
 if __name__ == "__main__":
-    keywords = ["data", "scientitst", "machine", "learning"]
+    keywords = ["data scientitst", "machine learning"]
     size = 50
     dice = Dice()
     dice.run(keywords, size)

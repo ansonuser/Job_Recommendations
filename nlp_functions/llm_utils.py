@@ -37,7 +37,6 @@ class Agent:
     
     def __init__(self, resume:str=None, model_path:str=None, train_epoches=5):
         self.model_path = model_path 
-        #r"D:\Side_projects\Job_Recommendation\mistral-7B"
         self.model = None
         self.tokenizer = None
         self.resume = resume

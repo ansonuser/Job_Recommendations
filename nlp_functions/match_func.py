@@ -7,13 +7,17 @@ import torch
 class Matcher:
     model = SentenceTransformer("BAAI/bge-m3")
 
-    def __init__(self, cv:Resume, jobs:List[Job]):
+    def __init__(self, cv:Resume=None, jobs:List[Job]=[]):
         self.cv = cv 
         self.jobs = []
         self.jobs += jobs
         self.cv_embeddings = None        
         self.results = []
         self.sep = "\n"
+    
+    def set_data(self, cv:Resume=None, jobs:List[Job]=[]):
+        self.cv = cv
+        self.jobs = jobs
     def encode(self, data:str, cv=False)->torch.Tensor:
         if cv:
             self.cv_embeddings = self.model.encode(data, convert_to_tensor=True)
@@ -31,9 +35,9 @@ class Matcher:
             data = [job.Title, job.Top_Skills]#, job.description]
             data = self.sep.join(data)
             score = torch.dot(self.cv_embeddings, self.encode(data))
-            cur.append((job["Compnay_Name"] + "," + job["Title"], score.item()))
-        cur.sort(key=lambda x:x[1])
-        return cur
+            cur.append((job.Company_Name + "," + job.Title, job.Link, score.item()))
+        order = sorted(cur, key=lambda x:x[2], reverse=True) 
+        return [(c[0], c[1], o) for c,o in zip(cur, order)]
         
         
             

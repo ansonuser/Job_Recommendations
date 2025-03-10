@@ -8,21 +8,27 @@ from utils.dataset import Job, Resume
 import yaml 
 
 class DataStream:
-    def __init__(self):
+    def __init__(self, qsize=10):
+        """
+        Arguments:
+            qsize: int 
+                number of row data being selected
+        """
         self.es = Elasticsearch(
             ["https://localhost:9200"],
             basic_auth = ("elastic", str(CFG['elasticsearch']['Password'])),
             verify_certs=False
             )  
+        self.query_size = qsize 
         self.index_name = "jobs_db"
-        self.resume_path = os.getcwd(".") + "\\..\\configs\\resume.yaml"
+        self.resume_path = os.getcwd() + "\\..\\configs\\resume.yaml"
     def query_job_by_time(self, days=7):
         now = datetime.datetime.now(datetime.timezone.utc)
         days_ago = now - datetime.timedelta(days=days)
         start_date = days_ago.strftime("%Y-%m-%d %H:%M:%S")
         end_date = now.strftime("%Y-%m-%d %H:%M:%S")
         query = {
-            "size": 50, 
+            "size": self.query_size, 
             "query": {
                 "range": {
                     "Timestamp": {  # Replace with your actual timestamp field name
@@ -41,7 +47,7 @@ class DataStream:
 
     def send_data(self):
         response = self.query_job_by_time()
-        feature_names = ["Title", "Overview", "Top Skills", "Description", "Company Name"]
+        feature_names = ["Title", "Overview", "Top Skills", "Description", "Company Name", "Link"]
         jobs = [ Job(**{k:response["hits"]["hits"][i]["_source"][k] for k in feature_names}) for i in range(len(response["hits"]["hits"]))]
         with open(self.resume_path, "r") as f:
             resume = yaml.safe_load(f)
