@@ -166,7 +166,7 @@ class Agent:
                 outputs = peft_model(input_ids=input_ids, attention_mask=attention_mask)
                
                 # decoder model is trained for predict the next token, given a size n input got a size n output, token by token.
-                logits = outputs.logits[:, -1, [self.class_tokens["No"], self.class_tokens["Yes"]]]
+                logits = outputs.logits[:, -1, [self.class_tokens[0], self.class_tokens[1]]]
                 logits = Softmax(dim=2)(logits)
 
                 # Compute loss
