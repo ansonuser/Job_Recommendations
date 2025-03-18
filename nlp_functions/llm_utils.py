@@ -185,7 +185,7 @@ class Agent:
 
 
     def save_model(self, peft_model):
-        save_directory = os.getcwd() + "../lora_binary_classifier"
+        save_directory = os.getcwd() + f"..{os.sep}lora_binary_classifier"
         if not os.path.isdir(save_directory):
             os.makedirs(save_directory)
         peft_model.save_pretrained(save_directory)

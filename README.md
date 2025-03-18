@@ -1,6 +1,6 @@
 ## Introduction
 
-This is a toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two model to rank how positions match your resume. 
+This is a toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two models to rank how positions match your resume. 
 
 ## Data Source
 1. Dice

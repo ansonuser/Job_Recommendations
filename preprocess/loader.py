@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 import datetime  
 import sys
 import os
-sys.path.append(os.getcwd() + "\\..")
+sys.path.append(os.getcwd() + os.sep +"..")
 from utils.helper import CFG, Logger
 from utils.dataset import Job, Resume
 import yaml 
@@ -21,7 +21,7 @@ class DataStream:
             )  
         self.query_size = qsize 
         self.index_name = "jobs_db"
-        self.resume_path = os.getcwd() + "\\..\\configs\\resume.yaml"
+        self.resume_path = os.getcwd() + f"{os.sep}..{os.sep}configs{os.sep}resume.yaml"
     def query_job_by_time(self, days=7):
         now = datetime.datetime.now(datetime.timezone.utc)
         days_ago = now - datetime.timedelta(days=days)

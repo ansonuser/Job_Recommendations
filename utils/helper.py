@@ -5,7 +5,7 @@ import datetime
 import yaml
 
 def load_config(filename="data"):
-    cfg_path = os.path.abspath(os.getcwd()) + f"\\..\\configs\\{filename}.yaml"
+    cfg_path = os.path.abspath(os.getcwd()) + f"{os.sep}..{os.sep}configs{os.sep}{filename}.yaml"
     with open(cfg_path, 'r') as file:
         cfg = yaml.safe_load(file)
     return cfg
@@ -46,7 +46,7 @@ def get_logger(log_path, level):
 
 CFG = load_config()
 # Logs
-log_path = os.path.abspath(os.getcwd()) + "\\..\\Logs"
+log_path = os.path.abspath(os.getcwd()) + f"{os.sep}..{os.sep}Logs"
 Logger = get_logger(log_path, CFG["logger"]["level"])
 
 
