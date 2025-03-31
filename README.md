@@ -81,3 +81,10 @@ Rank the positions from your database
 ```
 python predction/predict.py
 ```
+
+Application Tracking System
+```
+cd $PATH_TO_FLASK
+
+python app.py
+```
