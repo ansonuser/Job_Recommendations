@@ -8,7 +8,7 @@ from utils.dataset import Job, Resume
 import yaml 
 
 class DataStream:
-    def __init__(self, qsize=10):
+    def __init__(self, qsize=10, index_name="jobs_db"):
         """
         Arguments:
             qsize: int 
@@ -20,13 +20,13 @@ class DataStream:
             verify_certs=False
             )  
         self.query_size = qsize 
-        self.index_name = "jobs_db"
+        self.index_name = index_name
         self.resume_path = os.getcwd() + f"{os.sep}..{os.sep}configs{os.sep}resume.yaml"
     def query_job_by_time(self, days=7):
         now = datetime.datetime.now(datetime.timezone.utc)
         days_ago = now - datetime.timedelta(days=days)
         start_date = days_ago.strftime("%Y-%m-%d %H:%M:%S")
-        end_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        end_date = (now+ datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S") 
         query = {
             "size": self.query_size, 
             "query": {
@@ -47,11 +47,17 @@ class DataStream:
 
     def send_data(self):
         response = self.query_job_by_time()
-        feature_names = ["Title", "Overview", "Top_Skills", "Description", "Company_Name", "Link"]
+        feature_names = ["Title", "Overview", "Top Skills", "Description", "Company Name", "Link", "Payment", "Contract Type", "Source"]
+        feature_names +=  ["location", "title", "name",  "short_name", "short_title"]
         jobs = [ ]
         for i in range(len(response["hits"]["hits"])):
             try:
-                job = Job(**{k:response["hits"]["hits"][i]["_source"][k.replace("_"," ")] for k in feature_names})
+                filtered_features = {}
+                for f in feature_names: 
+               
+                    if f in response["hits"]["hits"][i]["_source"]:
+                        filtered_features[f] = response["hits"]["hits"][i]["_source"][f]
+                job = Job(**filtered_features)
                 jobs.append(job)
             except Exception as e:
                 print(str(e))

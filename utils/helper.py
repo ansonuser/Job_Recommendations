@@ -14,7 +14,8 @@ def load_config(filename="data"):
 options = Options()
 options.add_argument("--headless=new")
 options.add_argument("--disable-gpu")
-
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-setuid-sandbox')
 
 HEADERS= {
     'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/2010010' \

@@ -1,0 +1,116 @@
+<!-- templates/job_details.html -->
+{% extends "layout.html" %}
+
+{% block title %}{{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="job-details">
+        <div class="job-details-header">
+            <h1>{{ job.title }}</h1>
+            <div class="job-bookmark">
+                <button class="bookmark-btn" data-job-id="{{ job.id }}">
+                    <i class="far fa-bookmark"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="job-meta">
+            <div class="applied-date">
+                {% if current_user.is_authenticated %}
+                    {% set application = current_user.applications|selectattr('job_id', 'equalto', job.id)|first %}
+                    {% if application %}
+                        <div class="applied-badge">
+                            Applied on {{ application.applied_date.strftime('%b %d, %Y') }}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <div class="job-match-detail">
+                {% if current_user.is_authenticated %}
+                    <div class="match-circle">
+                        <div class="match-icon {% if match_percentage >= 70 %}strong-match{% elif match_percentage >= 40 %}medium-match{% else %}weak-match{% endif %}"></div>
+                        <div class="match-percentage">{{ match_percentage|int }}%</div>
+                    </div>
+                    <div class="match-text">Strong Match</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="job-info-grid">
+            <div class="job-info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Job Location</h3>
+                <p>{{ job.location }}</p>
+            </div>
+            
+            <div class="job-info-item">
+                <i class="fas fa-building"></i>
+                <h3>Department</h3>
+                <p>{{ job.department }}</p>
+            </div>
+            
+            <div class="job-info-item">
+                <i class="fas fa-id-card"></i>
+                <h3>Job ID</h3>
+                <p>{{ job.job_id }}</p>
+            </div>
+        </div>
+        
+        <div class="job-description">
+            <h2>Description</h2>
+            <div class="description-content">
+                {{ job.description|nl2br }}
+            </div>
+        </div>
+        
+        <div class="job-skills-section">
+            <h2>Skills</h2>
+            <div class="skills-list">
+                {% for skill in skills %}
+                    <div class="skill-item">
+                        {% if current_user.is_authenticated %}
+                            {% set user_has_skill = current_user.skills|selectattr('skill_id', 'equalto', skill.id)|first %}
+                            <i class="fas fa-check-circle {% if user_has_skill %}has-skill{% endif %}"></i>
+                        {% endif %}
+                        <span>{{ skill.name }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="job-actions">
+            {% if current_user.is_authenticated %}
+                {% set application = current_user.applications|selectattr('job_id', 'equalto', job.id)|first %}
+                {% if not application %}
+                    <form action="{{ url_for('apply_job', job_id=job.id) }}" method="post">
+                        <button type="submit" class="apply-btn">Apply Now</button>
+                    </form>
+                {% else %}
+                    <button class="already-applied-btn" disabled>Applied</button>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-to-apply-btn">Login to Apply</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="job-insights">
+        <h2>Job Insights</h2>
+        <p>Based on previously hired candidates</p>
+        
+        <div class="insights-content">
+            <div class="insight-item">
+                <i class="fas fa-user-check"></i>
+                <p>Top 10 percent of applicants</p>
+            </div>
+            
+            <div class="insight-item">
+                <i class="fas fa-briefcase"></i>
+                <p>5-10 years of relevant experience</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

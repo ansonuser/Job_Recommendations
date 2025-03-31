@@ -1,7 +1,7 @@
 from selenium import webdriver
 import os
 import sys
-sys.path.append(os.getcwd() + "\\..")
+sys.path.append(os.getcwd() + f"{os.sep}..")
 from utils.helper import options, CFG, Logger
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,8 +15,9 @@ from elasticsearch import Elasticsearch
 class Dice:
     """"
     Wrapper for crawling data from  https://www.dice.com
+    Default: Weekly update vacancies
     """
-    def __init__(self):
+    def __init__(self, index_name="jobs_db"):
         self.driver = webdriver.Chrome(options=options)
         self.domain_name = "https://www.dice.com"
         self.wait = WebDriverWait(self.driver, 10)
@@ -25,8 +26,8 @@ class Dice:
             basic_auth = ("elastic", str(CFG['elasticsearch']['Password'])),
             verify_certs=False
         )
-
-       
+        self.index_name = index_name
+   
     def quit(self):
         self.driver.quit()
         
@@ -61,7 +62,7 @@ class Dice:
   
         job_links = []  
        
-        url = f"{self.domain_name}/jobs?q={keywords}&countryCode=US&&page=1&pageSize={page_size}&filters.postedDate=SEVEN&filters.workplaceTypes=Remote&filters.employmentType=FULLTIME&language=en"
+        url = f"{self.domain_name}/jobs?q={keywords}&countryCode=US&&page=1&pageSize={page_size}&filters.postedDate=THIRTY&filters.workplaceTypes=Remote&filters.employmentType=FULLTIME&language=en"
         self.driver.get(url)
         try:
             job_elements = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.card-title-link")))
@@ -87,7 +88,10 @@ class Dice:
             self.driver.get(job["url"])
             
             time.sleep(random.uniform(3, 5))  
-           
+            toggle_button = self.wait.until(EC.element_to_be_clickable((By.ID, "descriptionToggle")))
+            toggle_button.click()
+            
+            # job_elements = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.card-title-link")))
             try:
                 job_loc = self.driver.find_element(By.XPATH, "//*[@data-cy='location']").text.strip()
             except:
@@ -155,8 +159,10 @@ class Dice:
                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             job_id = job_data["Company Name"] + "," + job_data["Title"]
-            self.es.index(index="jobs_db", id=job_id, document=job_data)
-            Logger.info(f"[{str(self)}] Insert {job_id} to jobs_db.")
+            if not self.es.exists(index=self.index_name, id=job_id):
+                self.es.index(index=self.index_name, id=job_id, document=job_data)
+                self.es.index(index=self.index_name, id=job_id, document=job_data)
+                Logger.info(f"[{str(self)}] Insert {job_id} to jobs_db.")
         except Exception as e:
             print(f"⚠️ Skipping job {job_data['title']} due to error:", str(e))
         return job_data
@@ -166,6 +172,6 @@ class Dice:
         
 if __name__ == "__main__":
     keywords = ["data scientitst", "machine learning"]
-    size = 50
-    dice = Dice()
+    size = 5
+    dice = Dice(index_name="test_index")
     dice.run(keywords, size)

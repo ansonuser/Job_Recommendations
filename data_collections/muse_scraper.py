@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import re
 import sys
 import os
-sys.path.append(os.getcwd() + "\\..")
+sys.path.append(os.getcwd() + f"{os.sep}..")
 from utils.helper import HEADERS
 import requests
 import copy
@@ -17,6 +17,7 @@ from elasticsearch import Elasticsearch
 class TheMuse:
     """
     Wrapper for crawling data from  https://www.themuse.com/
+    Default:  Bi-weekly update vacancies
     """
     def __init__(self, limit_per:int=10, last_days:int=14, remote:bool=True, min_return:int=None):
         self.domain_name = "https://www.themuse.com/"
@@ -137,11 +138,13 @@ class TheMuse:
             info_dict["Labels"] = [] # cold start
             info_dict["Source"] = str(self)
             info_dict["Timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
-            self.es.index(index="jobs_db", id=job_id, document=info_dict)
-            Logger.info(f"[{str(self)}] Insert {job_id} to jobs_db.")
-            res.append(info_dict)
-            sleep_time = random.uniform(1, 3)
-            time.sleep(sleep_time)
+            info_dict["Link"] = link
+            if not self.es.exists(index="jobs_db", id=job_id):
+                self.es.index(index="jobs_db", id=job_id, document=info_dict)
+                Logger.info(f"[{str(self)}] Insert {job_id} to jobs_db.")
+                res.append(info_dict)
+                sleep_time = random.uniform(1, 3)
+                time.sleep(sleep_time)
         return res
     
     def close_elastic(self):
@@ -183,7 +186,7 @@ class TheMuse:
  
 
 if __name__ == "__main__":
-    scraper = TheMuse(limit_per=50)
+    scraper = TheMuse(last_days=14,limit_per=100)
     keywords = ["Data", "Machine", "Scientist"]
     jobs = scraper.search(keywords)
     scraper.close_elastic()

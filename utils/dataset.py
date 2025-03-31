@@ -10,7 +10,7 @@ class Data:
         article = ""
         for f in self.features:
             article += f
-            article += ":" + getattr(self, f)
+            article += ":" + getattr(self, f.replace(" ", "_"))
             article += "\n"
         return article
 

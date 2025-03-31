@@ -1,0 +1,50 @@
+<!-- templates/admin.html -->
+{% extends "layout.html" %}
+            
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-dashboard">
+        <div class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <a href="{{ url_for('add_job') }}" class="add-job-btn">Add New Job</a>
+        </div>
+        
+        <div class="admin-section">
+            <h2>Manage Jobs</h2>
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Department</th>
+                            <th>Applications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                            <tr>
+                                <td>{{ job.id }}</td>
+                                <td><a href="{{ url_for('job_details', job_id=job.id) }}">{{ job.title }}</a></td>
+                                <td>{{ job.company }}</td>
+                                <td>{{ job.location }}</td>
+                                <td>{{ job.department }}</td>
+                                <td>{{ job.applications|length }}</td>
+                                <td class="actions">
+                                    <a href="#" class="edit-btn" data-job-id="{{ job.id }}"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="delete-btn" data-job-id="{{ job.id }}"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

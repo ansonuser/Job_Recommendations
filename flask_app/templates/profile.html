@@ -1,0 +1,71 @@
+<!-- templates/profile.html -->
+{% extends "layout.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>{{ user.username }}'s Profile</h1>
+        </div>
+        <div class="resume-section">
+            <h2>Your Resume</h2>
+            <form action="{{ url_for('upload_resume') }}" method="post" enctype="multipart/form-data">
+                <label for="resume-upload" class="custom-file-label">Choose Resume</label>
+                <input type="file" id="resume-upload" name="resume" accept="application/pdf" required>
+                <button type="submit" class="upload-resume-btn">Upload Resume</button>
+            </form>
+        
+            {% if resume_url %}
+            <div class="resume-preview">
+                <iframe id="resume-frame" src="{{ resume_url }}#toolbar=0" width="100%" height="400px"></iframe>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Fullscreen Modal -->
+        <div id="resume-modal" class="resume-modal">
+            <div class="close-btn" onclick="closeResume()">×</div>
+            <iframe id="resume-modal-frame" src="" frameborder="0"></iframe>
+        </div>
+         <!-- {% if skill in user_skills %}checked{% endif %} -->
+        <div class="profile-section">
+            <h2>Your Skills</h2>
+                <div class="skills-grid">
+                    {% for skill in user_skills %}
+                    <label class="skill-tag" for="skill-{{ skill.id }}">{{ skill.name }}</label>
+                    {% endfor %}
+                </div>
+           
+        </div>
+        
+        <div class="profile-section">
+            <h2>Your Applications</h2>
+            {% if applications %}
+                <div class="applications-list">
+                    {% for application in applications %}
+                        <div class="application-item">
+                            <div class="application-job">
+                                <h3><a href="{{ url_for('job_details', job_id=application.job.id) }}">{{ application.job.title }}</a></h3>
+                                <p>{{ application.job.company }} • {{ application.job.location }}</p>
+                            </div>
+                            <div class="application-date">
+                                <p>Applied on {{ application.applied_date.strftime('%b %d, %Y') }}</p>
+                            </div>
+                            <div class="application-match">
+                                <div class="match-percentage">{{ application.match_percentage|int }}% Match</div>
+                            </div>
+                            <div class="application-status">
+                                <span class="status-badge">{{ application.status }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-applications">You haven't applied to any jobs yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

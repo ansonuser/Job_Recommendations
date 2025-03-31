@@ -1,0 +1,66 @@
+ <!-- templates/add_job.html -->
+ {% extends "layout.html" %}
+            
+ {% block title %}Add Job{% endblock %}
+ 
+ {% block content %}
+ <div class="container">
+     <div class="add-job-form">
+         <h1>Add New Job</h1>
+         
+         <form method="post">
+             <div class="form-group">
+                 <label for="title">Job Title</label>
+                 <input type="text" id="title" name="title" required>
+             </div>
+             
+             <div class="form-group">
+                 <label for="company">Company</label>
+                 <input type="text" id="company" name="company" required>
+             </div>
+             
+             <div class="form-group">
+                 <label for="location">Location</label>
+                 <input type="text" id="location" name="location" required>
+             </div>
+             
+             <div class="form-group">
+                 <label for="department">Department</label>
+                 <input type="text" id="department" name="department" required>
+             </div>
+             
+             <div class="form-group">
+                 <label for="job_id">Job ID</label>
+                 <input type="text" id="job_id" name="job_id" required>
+             </div>
+             
+             <div class="form-group checkbox">
+                 <input type="checkbox" id="is_full_time" name="is_full_time" checked>
+                 <label for="is_full_time">Full Time</label>
+             </div>
+             
+             <div class="form-group">
+                 <label for="description">Job Description</label>
+                 <textarea id="description" name="description" rows="10" required></textarea>
+             </div>
+             
+             <div class="form-group">
+                 <label>Required Skills</label>
+                 <div class="skills-grid">
+                     {% for skill in skills %}
+                         <div class="skill-checkbox">
+                             <input type="checkbox" id="skill-{{ skill.id }}" name="skills" value="{{ skill.id }}">
+                             <label for="skill-{{ skill.id }}">{{ skill.name }}</label>
+                         </div>
+                     {% endfor %}
+                 </div>
+             </div>
+             
+             <div class="form-actions">
+                 <a href="{{ url_for('admin') }}" class="cancel-btn">Cancel</a>
+                 <button type="submit" class="submit-btn">Add Job</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ {% endblock %}

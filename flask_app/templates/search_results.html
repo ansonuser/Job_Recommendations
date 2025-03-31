@@ -1,0 +1,72 @@
+<!-- templates/search_results.html -->
+{% extends "layout.html" %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-results">
+        <h1>Search Results</h1>
+                    
+                    <div class="search-summary">
+                        {% if query and location %}
+                            <p>Showing results for "{{ query }}" in "{{ location }}"</p>
+                        {% elif query %}
+                            <p>Showing results for "{{ query }}"</p>
+                        {% elif location %}
+                            <p>Showing results in "{{ location }}"</p>
+                        {% endif %}
+                        <p>{{ jobs|length }} jobs found</p>
+                    </div>
+                    
+                    <div class="jobs-container">
+                        {% if jobs %}
+                            {% for job in jobs %}
+                                <div class="job-card">
+                                    <div class="job-bookmark">
+                                        <button class="bookmark-btn" data-job-id="{{ job.id }}">
+                                            <i class="far fa-bookmark"></i>
+                                        </button>
+                                    </div>
+                                    <div class="job-header">
+                                        <h2><a href="{{ url_for('job_details', job_id=job.id) }}">{{ job.title }}</a></h2>
+                                    </div>
+                                    <div class="job-info">
+                                        <p>{{ job.company }}</p>
+                                        <p>{{ job.location }} • {% if job.is_full_time %}Full Time{% else %}Part Time{% endif %} • {{ job.department }}</p>
+                                    </div>
+                                    <div class="job-skills">
+                                        {% for job_skill in job.skills[:5] %}
+                                            <span class="skill-tag">{{ job_skill.skill.name }}</span>
+                                        {% endfor %}
+                                        {% if job.skills|length > 5 %}
+                                            <span class="skill-tag more-skills">+{{ job.skills|length - 5 }} more</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="job-match">
+                                        {% if current_user.is_authenticated %}
+                                            {% set user_skill_ids = current_user.skills|map(attribute='skill_id')|list %}
+                                            {% set job_skill_ids = job.skills|map(attribute='skill_id')|list %}
+                                            {% set common_skills = user_skill_ids|selectattr('in', 'item', job_skill_ids)|list %}
+                                            {% set match_percentage = (common_skills|length / job_skill_ids|length * 100) if job_skill_ids|length > 0 else 0 %}
+                                            <div class="match-indicator {% if match_percentage >= 70 %}strong-match{% elif match_percentage >= 40 %}medium-match{% else %}weak-match{% endif %}">
+                                                <span class="match-dot"></span>
+                                                <span class="match-text">{% if match_percentage >= 70 %}Strong Match{% elif match_percentage >= 40 %}Medium Match{% else %}Weak Match{% endif %}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="job-posted">
+                                        <p>Posted {{ (now - job.created_at).days }} days ago</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-results">
+                                <p>No jobs found matching your search criteria.</p>
+                                <a href="{{ url_for('index') }}" class="back-to-jobs">View All Jobs</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
