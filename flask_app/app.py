@@ -10,7 +10,7 @@ import sys
 sys.path.append(os.getcwd()+f"{os.sep}..")
 from preprocess.job_parser import extract_skills_from_resume
 from Levenshtein import distance
-# from werkzeug.security import generate_password_hash
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jobs.db'
@@ -75,7 +75,7 @@ def load_user(user_id):
 @app.route('/')
 def index():
     jobs = Job.query.order_by(Job.created_at.desc()).limit(20).all()
-    # print(jobs)
+
     return render_template('index.html', jobs=jobs, now=datetime.datetime.now())
 
 @app.template_filter('nl2br')
@@ -91,7 +91,7 @@ def job_details(job_id):
     skills = set()
     for js in job.skills:
         skills.add(js.skill)
-    # print(skills)
+
     skills = list(skills)
     match_percentage = 0
     if current_user.is_authenticated:
@@ -172,14 +172,13 @@ def profile():
     skills = []
     matched_skills = []
     skills = Skill.query.all()
-    # print("skills:", skills)
+
     if len(skills) > 0 and resume_ats is not None:
         matched_skills = [skill for skill in skills if match(skill.name.lower(), resume_ats["skills"])]
     else:
         matched_skills = []
     # Update user's skills
     UserSkill.query.filter_by(user_id=current_user.id).delete()
-    # print("len of matched skills:", len(matched_skills))
     for skill_id in matched_skills:
         skill_id = int(skill_id.id)
         user_skill = UserSkill(user_id=current_user.id, skill_id=skill_id)
@@ -189,24 +188,6 @@ def profile():
     user_skills = [s for s in skills if s.id in user_skill_ids]
     applications = Application.query.filter_by(user_id=current_user.id).all()
     return render_template('profile.html', user=current_user, user_skills=user_skills, skills=skills, applications=applications,  resume_url=resume_url)
-
-# @app.route('/update_skills', methods=['POST'])
-# @login_required
-# def update_skills():
-#     selected_skills = request.form.getlist('skills')
-#     print("selected skills:", selected_skills)
-#     # Remove all existing skills
-#     UserSkill.query.filter_by(user_id=current_user.id).delete()
-    
-#     # Add new skills
-#     for skill_id in selected_skills:
-#         skill_id = int(skill_id)
-#         user_skill = UserSkill(user_id=current_user.id, skill_id=skill_id)
-#         db.session.add(user_skill)
-    
-#     db.session.commit()
-#     flash('Skills updated successfully')
-#     return redirect(url_for('profile'))
 
 @app.route('/apply/<int:job_id>', methods=['POST'])
 @login_required

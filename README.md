@@ -1,6 +1,21 @@
 ## Introduction
 
-This is a toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two models to rank how positions match your resume. 
+- [Application Tracking System] (## Application Tracking System)
+A Simple version of ATS, see how you resume match the position.  
+
+
+- Language Model Recommendation
+A toy example of job recommendation. Using Mistral-7B in 8bits quantization takes around 7~8G VRAM for summary and classification, BGE-M3 as emedding model for semantic similarity. Combine two models to rank how positions match your resume. 
+
+## Application Tracking System
+
+```
+cd $PATH_TO_FLASK
+
+python app.py
+```
+
+## Language Model Recommendation
 
 ## Data Source
 1. Dice
@@ -82,9 +97,7 @@ Rank the positions from your database
 python predction/predict.py
 ```
 
-Application Tracking System
-```
-cd $PATH_TO_FLASK
 
-python app.py
-```
+
+## License
+MIT license
