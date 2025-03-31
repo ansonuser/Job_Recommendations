@@ -1,6 +1,6 @@
 ## Introduction
 
-- [Application Tracking System](#application-tracking-system)
+- **[Application Tracking System](#application-tracking-system)**
 
 A Simple version of ATS, see how you resume match the position.  
 
@@ -63,7 +63,7 @@ docker run -d -p 9200:9200 -e "discovery.type=single-node" --net elastic --name 
 docker exec -it elasticsearch bin/elasticsearch-reset-password -u elastic -i
 
 ```
-Vis Tool (Optional)
+Visualization Tool (Optional)
 ```
 # generate token to the user (It will be used when you first log in kibana)
 docker exec -it elasticsearch bin/elasticsearch-create-enrollment-token -s kibana

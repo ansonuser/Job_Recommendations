@@ -419,5 +419,4 @@ Additional responsibilities include involvement in presales and deployment activ
     db.session.commit()
 
 if __name__ == '__main__':
-
     app.run(debug=True)
