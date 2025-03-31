@@ -20,7 +20,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
+clearall = False
 # Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -75,6 +75,7 @@ def load_user(user_id):
 @app.route('/')
 def index():
     jobs = Job.query.order_by(Job.created_at.desc()).limit(20).all()
+    # print(jobs)
     return render_template('index.html', jobs=jobs, now=datetime.datetime.now())
 
 @app.template_filter('nl2br')
@@ -87,16 +88,18 @@ def nl2br_filter(s):
 @app.route('/job/<int:job_id>')
 def job_details(job_id):
     job = Job.query.get_or_404(job_id)
-    skills = [js.skill for js in job.skills]
-    
+    skills = set()
+    for js in job.skills:
+        skills.add(js.skill)
+    # print(skills)
+    skills = list(skills)
     match_percentage = 0
     if current_user.is_authenticated:
         user_skill_ids = [us.skill_id for us in current_user.skills]
         job_skill_ids = [js.skill_id for js in job.skills]
-        
+        job_skill_ids = set(job_skill_ids)
         if job_skill_ids:  # Avoid division by zero
-            match_percentage = len(set(user_skill_ids).intersection(set(job_skill_ids))) / len(job_skill_ids) * 100
-            
+            match_percentage = len(set(user_skill_ids).intersection(job_skill_ids)) / len(job_skill_ids) * 100
     return render_template('job_details.html', job=job, skills=skills, match_percentage=match_percentage)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -170,9 +173,10 @@ def profile():
     matched_skills = []
     skills = Skill.query.all()
     # print("skills:", skills)
-
-    matched_skills = [skill for skill in skills if match(skill.name.lower(), resume_ats["skills"])]
-  
+    if len(skills) > 0 and resume_ats is not None:
+        matched_skills = [skill for skill in skills if match(skill.name.lower(), resume_ats["skills"])]
+    else:
+        matched_skills = []
     # Update user's skills
     UserSkill.query.filter_by(user_id=current_user.id).delete()
     # print("len of matched skills:", len(matched_skills))
@@ -186,23 +190,23 @@ def profile():
     applications = Application.query.filter_by(user_id=current_user.id).all()
     return render_template('profile.html', user=current_user, user_skills=user_skills, skills=skills, applications=applications,  resume_url=resume_url)
 
-@app.route('/update_skills', methods=['POST'])
-@login_required
-def update_skills():
-    selected_skills = request.form.getlist('skills')
+# @app.route('/update_skills', methods=['POST'])
+# @login_required
+# def update_skills():
+#     selected_skills = request.form.getlist('skills')
+#     print("selected skills:", selected_skills)
+#     # Remove all existing skills
+#     UserSkill.query.filter_by(user_id=current_user.id).delete()
     
-    # Remove all existing skills
-    UserSkill.query.filter_by(user_id=current_user.id).delete()
+#     # Add new skills
+#     for skill_id in selected_skills:
+#         skill_id = int(skill_id)
+#         user_skill = UserSkill(user_id=current_user.id, skill_id=skill_id)
+#         db.session.add(user_skill)
     
-    # Add new skills
-    for skill_id in selected_skills:
-        skill_id = int(skill_id)
-        user_skill = UserSkill(user_id=current_user.id, skill_id=skill_id)
-        db.session.add(user_skill)
-    
-    db.session.commit()
-    flash('Skills updated successfully')
-    return redirect(url_for('profile'))
+#     db.session.commit()
+#     flash('Skills updated successfully')
+#     return redirect(url_for('profile'))
 
 @app.route('/apply/<int:job_id>', methods=['POST'])
 @login_required
@@ -323,7 +327,14 @@ def add_job():
 # Create database tables
 with app.app_context():
     db.create_all()
-    Job.query.delete()
+    db.session.commit()
+    if clearall:
+        Job.query.delete()
+        JobSkill.query.delete()
+        Skill.query.delete()
+        User.query.delete()
+        UserSkill.query.delete()
+        Application.query.delete()
     db.session.commit()
     # Add initial skills if they don't exist
     initial_skills = [
@@ -337,6 +348,7 @@ with app.app_context():
         if not Skill.query.filter_by(name=skill_name).first():
             skill = Skill(name=skill_name)
             db.session.add(skill)
+        
     
     # Add admin user if it doesn't exist
     if not User.query.filter_by(username='admin').first():
@@ -419,6 +431,7 @@ Additional responsibilities include involvement in presales and deployment activ
             for skill_name in job_data['skills']:
                 skill = Skill.query.filter_by(name=skill_name).first()
                 if skill:
+                    print("add jobskill:", skill)
                     job_skill = JobSkill(job_id=job.id, skill_id=skill.id)
                     db.session.add(job_skill)
         

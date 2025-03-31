@@ -33,7 +33,12 @@
                         <div class="match-icon {% if match_percentage >= 70 %}strong-match{% elif match_percentage >= 40 %}medium-match{% else %}weak-match{% endif %}"></div>
                         <div class="match-percentage">{{ match_percentage|int }}%</div>
                     </div>
-                    <div class="match-text">Strong Match</div>
+                    <span class="match-dot"></span>
+                    <span class="match-text">
+                        {% if match_percentage >= 70 %}Strong Match
+                        {% elif match_percentage >= 40 %}Medium Match
+                        {% else %}Weak Match
+                        {% endif %}</span>
                 {% endif %}
             </div>
         </div>
@@ -61,7 +66,7 @@
         <div class="job-description">
             <h2>Description</h2>
             <div class="description-content">
-                {{ job.description|nl2br }}
+                {{ job.description}}
             </div>
         </div>
         
