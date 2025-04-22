@@ -75,15 +75,6 @@ docker run -d --name kibana `
 ```
 
 
-```
-Label Tool (Optional)
-```
-$ cd utils
-$ python label_tool.py
-```
-
-
-
 Test if your elasticsearch functions normally:
 ```
 import requests
@@ -107,6 +98,11 @@ Rank the positions from your database
 python predction/predict.py
 ```
 
+Label Tool (Optional)
+```
+$ cd utils
+$ python label_tool.py
+```
 
 
 ## License
