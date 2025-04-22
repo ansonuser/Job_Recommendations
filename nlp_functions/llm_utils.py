@@ -1,11 +1,12 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, LogitsProcessorList
 import torch
-from peft import LoraConfig, get_peft_model, PeftModel
+from peft import LoraConfig, get_peft_model, PeftModel, PeftConfig
 from torch.nn import BCEWithLogitsLoss, Softmax
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
 import os
 from typing import List
+
 
 
 class BinaryClassificationLogitsProcessor(LogitsProcessorList):
@@ -111,6 +112,22 @@ class Agent:
         score_prompts = [self.grade_resume_prompt(job_description, self.resume) for job_description in job_descriptions]
         tokenized_inputs = self.tokenizer(score_prompts, return_tensors="pt", padding=True)
         return tokenized_inputs
+    
+    def load_Peft(self, peft_model_path=None):
+        """
+        load first and predict with do grade
+        """
+        if peft_model_path is None:
+            peft_model_path = os.getcwd() + f"..{os.sep}lora_binary_classifier"
+        config = PeftConfig.from_pretrained(peft_model_path)
+        base_model = AutoModelForCausalLM.from_pretrained(config.base_model_name_or_path)
+        model = PeftModel.from_pretrained(base_model, peft_model_path)
+        model.eval()
+        self.model = model
+        tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token  # fix for some causal models
+        self.tokenizer = tokenizer
 
     def do_grade(self, job_descriptions:List=[], model=None):
         """
@@ -137,7 +154,14 @@ class Agent:
         probs = torch.softmax(logits, dim=-1).cpu().detach().numpy()
         return probs[:, self.class_tokens[1]]
 
-    def finetuning(self, job_descriptions, labels):
+    def finetuning(self, job_descriptions:List, labels:List):
+        """
+        Classification is better to use AutoModelForSequenceClassification. 
+        I don't mean to mess up my local set up and simply use CausalLM
+        Args:
+            job_description: List of job description
+            labels: Labels of each job description
+        """
         lora_config = LoraConfig(
             r=8,  # LoRA rank (low-rank adaptation)
             lora_alpha=32,  # Scaling factor (Coef of new weight: W_new = W + lora_apha*(A*B) )
@@ -148,41 +172,45 @@ class Agent:
         )
         
         peft_model = get_peft_model(self.model, lora_config)
-        tokenized_inputs = self.get_grade_inputs(job_descriptions)
-        tokenized_inputs = {k: v.to("cuda") for k, v in tokenized_inputs.items()}
-        labels = labels.to("cuda")
-        dataset = TensorDataset(tokenized_inputs["input_ids"], tokenized_inputs["attention_mask"], labels)
-        dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
-        loss_fn = BCEWithLogitsLoss()
-        optimizer = AdamW(peft_model.parameters(), lr=2e-5) # don't know what it is...
+        # self.tokenizer(score_prompts, return_tensors="pt", padding=True)
         
-        peft_model.train()
-        for epoch in range(self.train_epoches):
-            total_loss = 0.0
-            for batch in dataloader:
-                input_ids, attention_mask, batch_labels = batch
+        for i, (jd, label) in enumerate(zip(job_descriptions, labels)):
+            print(f"Running at {i}")
+            tokenized_inputs = self.tokenizer(jd, return_tensors="pt", padding=True) 
+            tokenized_inputs = {k: v.to("cuda") for k, v in tokenized_inputs.items()}
+            label = torch.tensor([label]).to("cuda")
+            dataset = TensorDataset(tokenized_inputs["input_ids"], tokenized_inputs["attention_mask"], label)
+            dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+            loss_fn = BCEWithLogitsLoss()
+            optimizer = AdamW(peft_model.parameters(), lr=2e-5) # don't know what it is...
+            
+            peft_model.train()
+            for epoch in range(self.train_epoches):
+                total_loss = 0.0
+                for batch in dataloader:
+                    input_ids, attention_mask, batch_labels = batch
 
-                # Forward pass
-                outputs = peft_model(input_ids=input_ids, attention_mask=attention_mask)
-               
-                # decoder model is trained for predict the next token, given a size n input got a size n output, token by token.
-                logits = outputs.logits[:, -1, [self.class_tokens[0], self.class_tokens[1]]]
-                logits = Softmax(dim=2)(logits)
+                    # Forward pass
+                    outputs = peft_model(input_ids=input_ids, attention_mask=attention_mask)
+                
+                    # decoder model is trained for predict the next token, given a size n input got a size n output, token by token.
+                    logits = outputs.logits[:, -1, [self.class_tokens[0], self.class_tokens[1]]]
+                    logits = Softmax(dim=1)(logits).float()
 
-                # Compute loss
-                loss = loss_fn(logits.squeeze(1)[:, 1], batch_labels)
+                    # Compute loss
+                    loss = loss_fn(logits.squeeze(1)[:, 1], batch_labels.float())
 
-                # Backpropagation
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                    # Backpropagation
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
 
-                total_loss += loss.item()
+                    total_loss += loss.item()
 
-            avg_loss = total_loss / len(dataloader)
-            print(f"Epoch {epoch + 1}/{self.train_epoches} - Loss: {avg_loss:.4f}")
+                avg_loss = total_loss / len(dataloader)
+                print(f"Epoch {epoch + 1}/{self.train_epoches} - Loss: {avg_loss:.4f}")
 
-
+        self.save_model(peft_model)
 
     def save_model(self, peft_model):
         save_directory = os.getcwd() + f"..{os.sep}lora_binary_classifier"
