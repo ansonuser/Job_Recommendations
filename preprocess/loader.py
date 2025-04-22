@@ -6,7 +6,7 @@ sys.path.append(os.getcwd() + os.sep +"..")
 from utils.helper import CFG, Logger
 from utils.dataset import Job, Resume
 import yaml 
-
+from typing import List, Tuple
 class DataStream:
     def __init__(self, qsize=10, index_name="jobs_db"):
         """
@@ -22,11 +22,29 @@ class DataStream:
         self.query_size = qsize 
         self.index_name = index_name
         self.resume_path = os.getcwd() + f"{os.sep}..{os.sep}configs{os.sep}resume.yaml"
+        self.mapping = None
+        self.feature_names = None
+        self.set_features()
+
+    def set_features(self):
+        feature_names = ["Location", "Title", "Overview", "Top Skills", "Description", "Company Name", "Link", "Payment", "Contract Type", "Source"]
+        feature_names +=  ["posted_at", "location", "title", "name",  "short_name", "short_title"]
+        self.feature_names = feature_names
+        self.mapping =  {
+            "posted_at" : "Post Date",
+            "location": "Location",
+            "title": "Title",
+            "name": "Company_Name"
+            }
+
+
     def query_job_by_time(self, days=7):
         now = datetime.datetime.now(datetime.timezone.utc)
         days_ago = now - datetime.timedelta(days=days)
         start_date = days_ago.strftime("%Y-%m-%d %H:%M:%S")
         end_date = (now+ datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S") 
+        print("start date:", start_date)
+        print("end date:", end_date)
         query = {
             "size": self.query_size, 
             "query": {
@@ -45,18 +63,25 @@ class DataStream:
     def close_elastic(self):
         del self.es
 
-    def send_data(self):
-        response = self.query_job_by_time()
-        feature_names = ["Title", "Overview", "Top Skills", "Description", "Company Name", "Link", "Payment", "Contract Type", "Source"]
-        feature_names +=  ["location", "title", "name",  "short_name", "short_title"]
+    def send_data(self, d=7):#Tuple(Resume, List):
+        """
+        1. Get resume
+        2. Get job released in last 7 days
+        """
+        response = self.query_job_by_time(days=d)
+       
         jobs = [ ]
         for i in range(len(response["hits"]["hits"])):
             try:
                 filtered_features = {}
-                for f in feature_names: 
-               
+                for f in self.feature_names: 
                     if f in response["hits"]["hits"][i]["_source"]:
-                        filtered_features[f] = response["hits"]["hits"][i]["_source"][f]
+                        if f in self.mapping:
+                            aligned_f = self.mapping[f]
+                            filtered_features[aligned_f] = response["hits"]["hits"][i]["_source"][f]
+                        else:
+                            filtered_features[f] = response["hits"]["hits"][i]["_source"][f]
+
                 job = Job(**filtered_features)
                 jobs.append(job)
             except Exception as e:

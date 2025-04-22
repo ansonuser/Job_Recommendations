@@ -75,15 +75,23 @@ docker run -d --name kibana `
 ```
 
 
+```
+Label Tool (Optional)
+```
+$ cd utils
+$ python label_tool.py
+```
 
-Test if your elasticsearch function normally:
+
+
+Test if your elasticsearch functions normally:
 ```
 import requests
 r = requests.get("https://localhost:$PORT_ID/", auth=("elastic", $PASSWORD), verify=False)
 # %%
 ```
 
-For efficieny, make sure timestamp is mapped to date. If not, please update it as follows:
+For efficiency, make sure timestamp is mapped to date. If not, please update it as follows:
 
 ```
 PUT jobs_db/_mapping
