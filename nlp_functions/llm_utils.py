@@ -107,10 +107,12 @@ class Agent:
         bullet_points = self.tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
         return bullet_points
     
-    def get_grade_inputs(self, job_descriptions):
+    def get_grade_inputs(self, job_descriptions, tokenizer=None):
         job_descriptions = [self.do_bullet(job_description) for job_description in job_descriptions]
         score_prompts = [self.grade_resume_prompt(job_description, self.resume) for job_description in job_descriptions]
-        tokenized_inputs = self.tokenizer(score_prompts, return_tensors="pt", padding=True)
+        if tokenizer is None:
+            tokenizer = self.tokenizer
+        tokenized_inputs = tokenizer(score_prompts, return_tensors="pt", padding=True)
         return tokenized_inputs
     
     def load_Peft(self, peft_model_path=None):
@@ -213,7 +215,7 @@ class Agent:
         self.save_model(peft_model)
 
     def save_model(self, peft_model):
-        save_directory = os.getcwd() + f"..{os.sep}lora_binary_classifier"
+        save_directory = os.getcwd() + f"{os.sep}..{os.sep}lora_binary_classifier"
         if not os.path.isdir(save_directory):
             os.makedirs(save_directory)
         peft_model.save_pretrained(save_directory)
