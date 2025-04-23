@@ -104,6 +104,8 @@ $ cd utils
 $ python label_tool.py
 ```
 
+Quick Start: see notebook under the example folder. 
+
 
 ## License
 MIT license
