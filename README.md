@@ -23,6 +23,8 @@ python app.py
 1. Dice
 2. Themuse 
 
+<span style="color:orange"><strong>Note:</strong> Data source links may be invalid or have changed. Please verify and format the links as needed for your use case.</span>
+
 ## DB
 Elasticsearch: 
 1. Data has different features
